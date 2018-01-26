@@ -33,7 +33,16 @@ def load_vgg(sess, vgg_path):
     vgg_layer4_out_tensor_name = 'layer4_out:0'
     vgg_layer7_out_tensor_name = 'layer7_out:0'
     
-    return None, None, None, None, None
+    tf.saved_model.loader.load(sess, [vgg_tag], vgg_path)
+    graph = tf.get_default_graph()
+    image_input = graph.get_tensor_by_name(vgg_input_tensor_name)
+    keep_prob = graph.get_tensor_by_name(vgg_keep_prob_tensor_name)
+    layer_3 = graph.get_tensor_by_name(vgg_layer3_out_tensor_name)
+    layer_4 = graph.get_tensor_by_name(vgg_layer4_out_tensor_name)
+    layer_7 = graph.get_tensor_by_name(vgg_layer7_out_tensor_name)
+    
+    
+    return image_input, keep_prob, layer_3, layer_4, layer_7
 tests.test_load_vgg(load_vgg, tf)
 
 
@@ -47,7 +56,47 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     :return: The Tensor for the last layer of output
     """
     # TODO: Implement function
-    return None
+    
+    # Encoder - make sure the shapes are the same, 1x1 convolution of vgg layer 4
+    layer7_out = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, 
+                                  padding='same', 
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    
+    # Decoder
+    layer7_out = tf.layers.conv2d_transpose(layer7_out, num_classes, 4, 
+                                            strides= (2, 2), 
+                                            padding='same', 
+                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    
+    
+    
+    # make sure the shapes are the same, 1x1 convolution of vgg layer 4
+    layer4_out = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, 
+                                  padding='same', 
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    # skip connection (element-wise addition)
+    layer4_out = tf.add(layer7_out, layer4_out)
+    # upsample
+    layer4_out = tf.layers.conv2d_transpose(layer4_out, num_classes, 4, 
+                                            strides= (2, 2), 
+                                            padding='same',
+                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+
+
+    
+    # make sure the shapes are the same, 1x1 convolution of vgg layer 4
+    layer3_out = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, 
+                                  padding='same', 
+                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    # skip connection (element-wise addition)
+    layer3_out = tf.add(layer4_out, layer3_out)
+    # upsample
+    layer3_out = tf.layers.conv2d_transpose(layer3_out, num_classes, 16,
+                                            strides=(8, 8),
+                                            padding='same', 
+                                            kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
+    
+    return layer3_out
 tests.test_layers(layers)
 
 
