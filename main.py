@@ -60,12 +60,14 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     # Encoder - make sure the shapes are the same, 1x1 convolution of vgg layer 7
     layer7_out = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, 
                                   padding='same', 
+                                  kernel_initializer= tf.random_normal_initializer(stddev=0.01),
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
     
     # Decoder
     layer7_out = tf.layers.conv2d_transpose(layer7_out, num_classes, 4, 
                                             strides= (2, 2), 
                                             padding='same', 
+                                            kernel_initializer= tf.random_normal_initializer(stddev=0.01),
                                             kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
     
     
@@ -73,6 +75,7 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     # make sure the shapes are the same, 1x1 convolution of vgg layer 4
     layer4_out = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, 
                                   padding='same', 
+                                  kernel_initializer= tf.random_normal_initializer(stddev=0.01),
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
     # skip connection (element-wise addition)
     layer4_out = tf.add(layer7_out, layer4_out)
@@ -80,6 +83,7 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     layer4_out = tf.layers.conv2d_transpose(layer4_out, num_classes, 4, 
                                             strides= (2, 2), 
                                             padding='same',
+                                            kernel_initializer= tf.random_normal_initializer(stddev=0.01),
                                             kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
 
 
@@ -87,6 +91,7 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     # make sure the shapes are the same, 1x1 convolution of vgg layer 3
     layer3_out = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, 
                                   padding='same', 
+                                  kernel_initializer= tf.random_normal_initializer(stddev=0.01),
                                   kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
     # skip connection (element-wise addition)
     layer3_out = tf.add(layer4_out, layer3_out)
@@ -94,6 +99,7 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     layer3_out = tf.layers.conv2d_transpose(layer3_out, num_classes, 16,
                                             strides=(8, 8),
                                             padding='same', 
+                                            kernel_initializer= tf.random_normal_initializer(stddev=0.01),
                                             kernel_regularizer=tf.contrib.layers.l2_regularizer(1e-3))
     
     return layer3_out
@@ -112,10 +118,10 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     # TODO: Implement function
     # Flatten the last layer and labels so that each row represents a pixel and each col a class
     logits = tf.reshape(nn_last_layer, (-1, num_classes))
-    labels = tf.reshape(correct_label, (-1, num_classes))
+    correct_label = tf.reshape(correct_label, (-1, num_classes))
     
      # define loss function
-    cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits= logits, labels= labels))
+    cross_entropy_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits= logits, labels= correct_label))
     # define training operation
     optimizer = tf.train.AdamOptimizer(learning_rate= learning_rate)
     train_op = optimizer.minimize(cross_entropy_loss)
@@ -145,10 +151,17 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     print("Training...")
     print()
     for i  in  range(epochs):
+        print("EPOCH {} ...".format(i+1))
+        total_loss = 0
+        count = 0
         for image, label, in get_batches_fn(batch_size):
             _, loss = sess.run([train_op, cross_entropy_loss], feed_dict={input_image: image, correct_label: label, keep_prob:0.5, learning_rate: 0.0009})
-            print("Loss: = {:.3f}".format(loss))
-        print()
+            #print("Loss: = {:.3f}".format(loss))
+            total_loss += loss
+            count += 1
+        
+        mean_loss = total_loss / count
+        print("Loss per epoch: = {:.3f}".format(mean_loss))
             
 tests.test_train_nn(train_nn)
 
