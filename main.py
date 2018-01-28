@@ -183,7 +183,7 @@ def run():
 
         input_image, keep_prob, layer_3, layer_4, layer_7 = load_vgg(sess, vgg_path)
         nn_last_layer = layers(layer_3, layer_4, layer_7, num_classes)
-        logits, train_op, cross_entropy_loss = optimize(nn_last_layer, correct_label, num_classes)
+        logits, train_op, cross_entropy_loss = optimize(nn_last_layer, correct_label, learning_rate, num_classes)
 
         # TODO: Train NN using the train_nn function
         epochs = 1
