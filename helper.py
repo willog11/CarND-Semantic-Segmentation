@@ -7,6 +7,7 @@ import shutil
 import zipfile
 import time
 import tensorflow as tf
+import cv2
 from glob import glob
 from urllib.request import urlretrieve
 from tqdm import tqdm
@@ -57,6 +58,11 @@ def maybe_download_pretrained_vgg(data_dir):
         # Remove zip file to save space
         os.remove(os.path.join(vgg_path, vgg_filename))
 
+def normalize_img(img):
+    img_norm = img.copy() * 0
+    cv2.normalize(img, img_norm, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=-1)
+    return img_norm
+
 
 def gen_batch_function(data_folder, image_shape):
     """
@@ -91,7 +97,8 @@ def gen_batch_function(data_folder, image_shape):
                 gt_bg = gt_bg.reshape(*gt_bg.shape, 1)
                 gt_image = np.concatenate((gt_bg, np.invert(gt_bg)), axis=2)
 
-                images.append(image)
+                image_norm = normalize_img(image)
+                images.append(image_norm)
                 gt_images.append(gt_image)
 
             yield np.array(images), np.array(gt_images)
