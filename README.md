@@ -101,6 +101,7 @@ Loss per epoch: = 0.024
 Overall the network performs extremely well in nearly all cases. Rarely it doesn't perform as well in some areas with strong lighting and shadows. However this is to be expected with the amount of data that has been used.
 
 The following demo shows this performance:
+
 [![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/toTTx14s8jA/0.jpg)](https://www.youtube.com/watch?v=toTTx14s8jA)
 
 # CarND-Semantic-Segmentation
